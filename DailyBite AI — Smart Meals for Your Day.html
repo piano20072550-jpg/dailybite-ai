@@ -1,0 +1,252 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DailyBite AI — Smart Meals for Your Day</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:'Noto Sans Thai',system-ui,sans-serif;background:#fbf7ec;color:#1f2937}
+.card{background:#fff;border-radius:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:1.25rem;border:1px solid #f1ece0}
+.btn{padding:.6rem 1.1rem;border-radius:.9rem;font-weight:600;transition:.15s}
+.btn:hover{filter:brightness(.95)}.btn:disabled{opacity:.5}
+.bp{background:linear-gradient(90deg,#059669,#0d9488);color:#fff}
+.bs{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.opt{border:1px solid #e5e7eb;background:#fff;border-radius:.8rem;padding:.45rem .8rem;text-align:left;font-size:.9rem}
+.opt.on{background:#d1fae5;border-color:#10b981;color:#065f46}
+</style></head>
+<body>
+<header class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+ <div class="max-w-5xl mx-auto px-4 py-5 flex flex-wrap items-center justify-between gap-2">
+  <div><div class="text-2xl font-bold">🥗 DailyBite AI</div><div class="text-emerald-100 text-sm">Smart Meals for Your Day</div></div>
+  <div class="flex gap-2 flex-wrap"><span class="bg-white/20 rounded-full px-3 py-1 text-xs">AI-Powered Daily Meal Planner</span><span class="bg-amber-300 text-amber-900 rounded-full px-3 py-1 text-xs font-semibold">Demo Mode — Rule-Based AI Simulation</span></div>
+ </div></header>
+<main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+ <section class="card bg-gradient-to-br from-white to-emerald-50">
+  <h1 class="text-xl font-bold text-emerald-800">วางแผนอาหาร 3 มื้อให้เหมาะกับวันของคุณ</h1>
+  <p class="text-gray-600 mt-1">เลือกช่วงวัย กิจกรรม งบประมาณ และข้อจำกัดด้านอาหาร แล้วให้ DailyBite AI วิเคราะห์ จัดอันดับเมนู และคำนวณงบให้ทันที — ระบบนี้ใช้กฎคำนวณคะแนนที่อธิบายได้ ไม่ได้เรียก LLM จริง</p>
+ </section>
+
+ <section class="card"><h2 class="font-bold mb-3">👤 ช่วงวัย &amp; งบประมาณ</h2>
+  <div id="ages" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+  <div class="grid md:grid-cols-2 gap-4 mt-4">
+   <div><div class="text-sm font-semibold mb-1">💰 งบต่อวัน (บาท)</div>
+    <div class="flex items-center gap-2"><button class="btn bs" onclick="setBudget(S.budget-10)">−</button>
+    <input id="bud" type="number" min="0" class="border rounded-xl px-3 py-2 w-28 text-center" onchange="setBudget(this.value)">
+    <button class="btn bs" onclick="setBudget(S.budget+10)">+</button></div>
+    <div id="bhint" class="text-xs text-gray-500 mt-1">แนะนำ 50–500 บาท (กรอกมากกว่า 500 ได้)</div>
+    <div id="bmini" class="text-sm mt-2 text-emerald-800"></div></div>
+   <div><div class="text-sm font-semibold mb-1">🍽️ รูปแบบการเตรียมอาหาร</div>
+    <div id="modes" class="grid grid-cols-3 gap-2"></div></div>
+  </div></section>
+
+ <section><h2 class="font-bold mb-2">🗓️ Age-Based Activity Planner <span class="text-xs font-normal text-gray-500">(เลือกได้หลายกิจกรรมต่อช่วง)</span></h2>
+  <div id="acts" class="grid md:grid-cols-3 gap-3"></div>
+  <div class="flex gap-2 mt-3 flex-wrap"><button class="btn bs" onclick="rnd()">🎲 Random Activity</button><button class="btn bs" onclick="clr()">🧹 Clear Activities</button></div></section>
+
+ <section class="card"><h2 class="font-bold mb-3">🚫 Dietary Restrictions</h2>
+  <div id="res" class="flex flex-wrap gap-2"></div>
+  <input id="other" class="border rounded-xl px-3 py-2 w-full mt-3 text-sm" placeholder="ข้อจำกัดอื่น ๆ / อาหารหรือส่วนผสมที่ไม่ชอบ (คั่นด้วยเครื่องหมายจุลภาค เช่น หมู, เห็ด)" onchange="S.other=this.value;touch()">
+  <p class="text-xs text-gray-500 mt-2">การแพ้อาหารเป็นเงื่อนไขบังคับ — เมนูที่ทราบว่ามีส่วนผสมนั้นจะไม่ถูกแนะนำ แต่ควรตรวจส่วนผสมจริงและการปนเปื้อนข้ามเสมอ</p></section>
+
+ <div class="flex flex-wrap gap-2 justify-center"><button class="btn bp text-lg px-8" onclick="analyze()">✨ Analyze My Day</button><button class="btn bs" onclick="resetAll()">↺ Reset All</button></div>
+ <div id="out"></div>
+ <footer class="text-xs text-gray-500 text-center pb-8 space-y-1">
+  <p>ราคาและข้อมูลโภชนาการเป็นค่าประมาณ ไม่ใช่ค่าจากการตรวจวัดจริง · ไม่ใช่การวินิจฉัยหรือรักษาโรค</p>
+  <p>หากมีการตรวจสุขภาพที่ต้องงดอาหาร ให้ปฏิบัติตามคำสั่งของสถานพยาบาล · ไม่มีเมนูใดรับประกันว่าปลอดสารก่อภูมิแพ้</p></footer>
+</main>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bg-emerald-900 text-white text-sm rounded-full px-4 py-2 shadow-lg opacity-0 transition-opacity pointer-events-none" style="bottom:calc(env(safe-area-inset-bottom,0px) + 1rem)"></div>
+
+<script>
+// ===== DATA =====
+const AGES=[{e:'🧒',n:'เด็กวัยเรียน',r:'4–12 ปี',k:.8},{e:'🎓',n:'วัยรุ่นและนักศึกษา',r:'13–22 ปี',k:1},{e:'💼',n:'วัยทำงานและผู้ใหญ่',r:'23–59 ปี',k:1},{e:'👵',n:'ผู้สูงอายุ',r:'60 ปีขึ้นไป',k:.8}];
+const PER=[{e:'🌅',t:'กิจกรรมช่วงเช้า'},{e:'☀️',t:'กิจกรรมช่วงกลางวัน'},{e:'🌙',t:'กิจกรรมช่วงเย็น'}];
+const MEAL=['มื้อเช้า','มื้อกลางวัน','มื้อเย็น'],MEALE=['🌅','☀️','🌙'];
+// tags: H=ใช้พลังงานสูง F=ใช้สมาธิ Q=เวลาจำกัด L=เบา S=เคี้ยวง่าย B=ประหยัด
+const RAWA=[
+[['ไปโรงเรียนแต่เช้า|Q','มีสอบสำคัญช่วงเช้า|F','เรียนพละตอนเช้า|H','ตื่นสายและต้องรีบไปโรงเรียน|Q'],['เรียนในห้องเรียนต่อเนื่อง|F','เล่นฟุตบอลกับเพื่อน|H','เรียนว่ายน้ำ|H','ไปทัศนศึกษานอกสถานที่|HQ'],['ทำการบ้านหลังเลิกเรียน|F','เรียนพิเศษ|FQ','ซ้อมกีฬา|H','ทำกิจกรรมกับครอบครัว|L']],
+[['เข้าเรียนมหาวิทยาลัยแต่เช้า|F','สอบกลางภาคหรือปลายภาค|F','ตื่นสายและต้องรีบเดินทาง|Q','ออกกำลังกายก่อนเข้าเรียน|H'],['มีสอบช่วงบ่าย|F','พักเที่ยงเพียง 15 นาที|QB','ทำงานพาร์ตไทม์|HB','เรียนต่อเนื่องหลายคาบ|F'],['อ่านหนังสือสอบช่วงค่ำ|F','ทำโปรเจกต์กลุ่มต่อ|F','เข้ายิมหลังเลิกเรียน|H','เตรียมอาหารประหยัดงบ|B']],
+[['ประชุมหรือเสนองานสำคัญ|F','ทำงานหน้าคอมพิวเตอร์|F','ไรเดอร์ส่งอาหาร|HQ','ออกกำลังกายก่อนทำงาน|H'],['ประชุมต่อเนื่องหลายชั่วโมง|FQ','มีเวลาพักเที่ยงจำกัด|Q','ทำงานกลางแจ้ง|H','ค้าขายหน้าร้านไม่มีเวลานั่งทาน|HQ'],['ทำงานล่วงเวลา (OT)|FQ','เข้ายิมหลังเลิกงาน|H','รถติดระหว่างเดินทางกลับบ้าน|Q','ทำงานบ้าน|L']],
+[['เดินออกกำลังกายในสวน|L','รำไทเก๊ก|L','ทำสวนเบา ๆ|L','ต้องการอาหารที่เคี้ยวง่าย|S'],['ทำสวนหรือรดน้ำต้นไม้|L','พบปะเพื่อนวัยเดียวกัน|L','ทำกิจกรรมในชุมชน|L','ต้องการเพิ่มใยอาหาร|L'],['เดินเล่นเบา ๆ หลังอาหาร|L','รับประทานอาหารเย็นเร็ว|LS','สวดมนต์หรือทำสมาธิ|L','ต้องการอาหารเนื้อนุ่มและเคี้ยวง่าย|S']]];
+const ACTBY={};
+const ACTS=RAWA.map((g,gi)=>g.map((p,pi)=>p.map((s,i)=>{const[n,t]=s.split('|');const a={id:gi+'-'+pi+'-'+i,n,t};ACTBY[a.id]=a;return a})));
+// [ชื่อ, emoji, ราคาซื้อ, kcal, โปรตีน, flags, มื้อ, นาที, วัตถุดิบ(ชื่อ ปริมาณ:ราคา), อุปกรณ์|ขั้นตอน]
+// flags ตัวพิมพ์ใหญ่=สารก่อภูมิแพ้ (M นม E ไข่ N ถั่ว S อาหารทะเล G กลูเตน B เนื้อวัว) ตัวพิมพ์เล็ก=คุณสมบัติ (o นุ่ม l โซเดียมต่ำ h โปรตีนสูง c คาร์บต่ำ z ทำง่าย v มังสวิรัติ k เผ็ด)
+const RAWF=[
+['ข้าวไข่เจียว','🍳',45,480,17,'Ez','012',10,'ข้าวสวย 1 จาน:8;ไข่ไก่ 2 ฟอง:12;ซอสปรุงรส/น้ำมัน:3','กระทะ|ตีไข่กับซอสปรุงรส|ทอดไข่ไฟกลางจนสุกฟู|ตักเสิร์ฟบนข้าว'],
+['โจ๊กหมู','🥣',40,320,15,'oz','0',15,'ข้าวสวย 1/2 จาน:5;หมูบด 50 ก.:12;ขิง/ต้นหอม:4','หม้อ|ต้มข้าวกับน้ำจนเปื่อย|ใส่หมูบดคนให้สุก|โรยขิงและต้นหอม'],
+['ข้าวต้มปลา','🐟',50,330,20,'Solz','012',15,'ข้าวสวย 1/2 จาน:5;เนื้อปลา 80 ก.:18;ขิง/ผักกาด:5','หม้อ|ต้มน้ำให้เดือดแล้วใส่ข้าว|ใส่ปลาและผักต้มจนสุก|ปรุงรสอ่อน ๆ'],
+['ข้าวต้มไก่','🍲',45,340,20,'olzh','012',15,'ข้าวสวย 1/2 จาน:5;อกไก่ 60 ก.:12;ขิง/ต้นหอม:5','หม้อ|ต้มน้ำกับข้าวจนนุ่ม|ใส่ไก่ฉีกต้มจนสุก|ปรุงรสอ่อน ๆ โรยต้นหอม'],
+['ข้าวกะเพราไก่','🌶️',55,560,24,'k','12',12,'ข้าวสวย 1 จาน:8;ไก่สับ 80 ก.:18;กะเพรา/พริก/กระเทียม:8;ซอส/น้ำมัน:4','กระทะ|ผัดกระเทียมพริกให้หอม|ใส่ไก่ผัดจนสุกแล้วปรุงรส|ใส่ใบกะเพราผัดเร็ว ๆ'],
+['ข้าวไก่ย่าง','🍗',60,520,30,'h','12',25,'ข้าวสวย 1 จาน:8;ไก่ 100 ก.:22;ผักลวก:8','เตาอบหรือหม้อทอดไร้น้ำมัน|หมักไก่ 10 นาที|ย่างหรืออบจนสุก|เสิร์ฟกับข้าวและผักลวก'],
+['ข้าวอกไก่ผัดผัก','🥦',60,450,32,'hl','12',15,'ข้าวสวย 1 จาน:8;อกไก่ 100 ก.:20;ผักรวม:12;น้ำมัน/ซอส:3','กระทะ|หั่นอกไก่เป็นชิ้นพอดีคำ|ผัดไก่จนสุกแล้วใส่ผัก|ปรุงรสอ่อน ๆ เสิร์ฟกับข้าว'],
+['ข้าวผัดผัก','🍚',40,470,12,'Evz','012',12,'ข้าวสวย 1 จาน:8;ผักรวม:10;ไข่ไก่ 1 ฟอง:6;ซอส/น้ำมัน:4','กระทะ|ผัดไข่พอสุก|ใส่ผักและข้าวผัดให้ร้อน|ปรุงรสแล้วตักเสิร์ฟ'],
+['ข้าวเต้าหู้ผัดผัก','🥬',50,430,18,'vz','12',12,'ข้าวสวย 1 จาน:8;เต้าหู้ 1 หลอด:10;ผักรวม:12;ซอส:4','กระทะ|ผัดเต้าหู้ให้เหลืองเล็กน้อย|ใส่ผักผัดต่อ|ปรุงรสเสิร์ฟกับข้าว'],
+['สุกี้น้ำ','🍜',55,400,20,'EG','12',15,'วุ้นเส้น:8;หมู 50 ก.:12;ผัก:10;ไข่ไก่:6;น้ำซุป/ซอส:4','หม้อ|ต้มน้ำซุปให้เดือด|ใส่หมู ผัก และวุ้นเส้น|ตอกไข่ใส่ ปรุงรส'],
+['ก๋วยเตี๋ยวน้ำใส','🍜',50,350,14,'','12',15,'เส้น:10;ลูกชิ้น/หมู:15;ผัก:6;น้ำซุป:4','หม้อ|ลวกเส้นและผัก|ใส่ลูกชิ้นในน้ำซุปร้อน|ราดน้ำซุป ปรุงรส'],
+['ข้าวปลานึ่งผัก','🐠',65,430,30,'Slh','12',20,'ข้าวสวย 1 จาน:8;เนื้อปลา 100 ก.:28;ผักนึ่ง:8;น้ำจิ้ม:3','ซึ้งนึ่งหรือไมโครเวฟ|ปรุงรสปลาเล็กน้อย|นึ่งปลาและผักจนสุก|เสิร์ฟกับข้าว'],
+['สลัดไก่','🥗',70,300,28,'hlc','12',10,'ผักสลัด:15;อกไก่ 80 ก.:16;มะเขือเทศ/แตงกวา:8;น้ำสลัด:4','เตาหรือไมโครเวฟ|ต้มหรือย่างอกไก่แล้วฉีก|จัดผักในชาม|ใส่ไก่และน้ำสลัด'],
+['สลัดเต้าหู้','🥗',55,250,16,'vlc','12',8,'ผักสลัด:15;เต้าหู้:10;มะเขือเทศ/แตงกวา:8;น้ำสลัด:4','มีด/เขียง|หั่นเต้าหู้เป็นชิ้น|จัดผักในชาม|ใส่เต้าหู้และน้ำสลัด'],
+['ข้าวโพดต้มกับไข่ต้ม','🌽',30,280,14,'Elz','0',15,'ข้าวโพด 1 ฝัก:12;ไข่ไก่ 2 ฟอง:12','หม้อ|ต้มข้าวโพด 10 นาที|ต้มไข่ 8 นาทีแล้วแช่น้ำเย็น|ปอกเสิร์ฟ'],
+['มันหวานนึ่งกับนมถั่วเหลือง','🍠',30,260,8,'volz','0',20,'มันหวาน 1 หัว:10;นมถั่วเหลือง 1 กล่อง:12','ซึ้งนึ่งหรือไมโครเวฟ|ล้างมันหวานและหั่นท่อน|นึ่งจนนุ่ม|เสิร์ฟกับนมถั่วเหลือง'],
+['ข้าวแกงจืดเต้าหู้หมูสับ','🍲',50,400,18,'o','12',15,'ข้าวสวย 1 จาน:8;เต้าหู้:10;หมูสับ:10;ผักกาด/น้ำซุป:11','หม้อ|ต้มน้ำซุปให้เดือด|ใส่หมูสับและเต้าหู้|ใส่ผักกาดจนนุ่ม ปรุงรส'],
+['ข้าวผัดทูน่า','🐟',50,480,22,'Sh','12',10,'ข้าวสวย 1 จาน:8;ทูน่ากระป๋อง:18;ผัก:8;ซอส/น้ำมัน:4','กระทะ|ผัดผักกับข้าว|ใส่ทูน่าผัดให้เข้ากัน|ปรุงรสตักเสิร์ฟ'],
+['แซนด์วิชโฮลวีตไข่','🥪',35,330,16,'EGz','0',8,'ขนมปังโฮลวีต 3 แผ่น:10;ไข่ไก่ 2 ฟอง:12;ผักสลัด:5','กระทะ/เครื่องปิ้งขนมปัง|ทอดไข่ดาวหรือเจียว|ปิ้งขนมปัง|ประกบไข่กับผักสลัด'],
+['ข้าวไก่ผัดขิง','🫚',55,500,24,'','12',12,'ข้าวสวย 1 จาน:8;ไก่ 80 ก.:18;ขิงซอย:6;ซอส/น้ำมัน:4','กระทะ|ผัดขิงให้หอม|ใส่ไก่ผัดจนสุก|ปรุงรสเสิร์ฟกับข้าว'],
+['ผัดวุ้นเส้นผัก','🍝',45,380,11,'Ev','12',15,'วุ้นเส้น:10;ผัก:10;ไข่ไก่:6;ซอส/น้ำมัน:4','กระทะ|แช่วุ้นเส้นให้นุ่ม|ผัดผักและไข่|ใส่วุ้นเส้น ปรุงรสผัดให้เข้ากัน'],
+['โยเกิร์ตผลไม้กราโนล่า','🥣',45,300,10,'MNGvz','0',5,'โยเกิร์ต:15;กล้วย:6;กราโนล่า:12','ชาม/ช้อน|ใส่โยเกิร์ตในชาม|หั่นกล้วยวางบน|โรยกราโนล่า'],
+['ผัดไทยกุ้งสด','🍤',60,560,22,'SEN','12',15,'เส้นจันท์:10;กุ้ง:20;ไข่ไก่:6;ถั่วป่น:4;ซอสผัดไทย:4','กระทะ|ผัดกุ้งและไข่|ใส่เส้นกับซอสผัดให้เข้ากัน|โรยถั่วป่น'],
+['ข้าวกะเพราเต้าหู้','🌿',50,430,17,'vk','12',12,'ข้าวสวย 1 จาน:8;เต้าหู้:10;กะเพรา/พริก:8;ซอสเจ:4','กระทะ|ผัดพริกกระเทียมให้หอม|ใส่เต้าหู้ผัดต่อ|ใส่กะเพรา ปรุงรส'],
+['ข้าวเนื้อผัดพริกไทยดำ','🥩',70,540,30,'Bh','12',15,'ข้าวสวย 1 จาน:8;เนื้อวัว 80 ก.:30;พริกไทยดำ/หอมใหญ่:6;ซอส:4','กระทะ|ผัดเนื้อด้วยไฟแรง|ใส่หอมใหญ่และพริกไทยดำ|ปรุงรสเสิร์ฟกับข้าว']];
+const FOODS=RAWF.map((r,i)=>{const ing=r[8].split(';').map(s=>{const k=s.lastIndexOf(':');return{n:s.slice(0,k),c:+s.slice(k+1)}});const st=r[9].split('|');return{id:i,n:r[0],e:r[1],b:r[2],kc:r[3],pr:r[4],fl:r[5],ml:r[6],pt:r[7],ing,home:ing.reduce((a,x)=>a+x.c,0),eq:st[0],st:st.slice(1)}});
+const ALG={M:'นมวัว',E:'ไข่',N:'ถั่ว',S:'อาหารทะเล',G:'กลูเตน',B:'เนื้อวัว'};
+const RES=[['nospicy','ไม่ทานเผ็ด'],['veg','มังสวิรัติ'],['nobeef','ไม่ทานเนื้อวัว'],['milk','แพ้นมวัว'],['egg','แพ้ไข่'],['nut','แพ้ถั่ว'],['sea','แพ้อาหารทะเล'],['glu','ไม่ทานกลูเตน'],['soft','อาหารเนื้อนุ่ม'],['lowna','โซเดียมต่ำ'],['hp','โปรตีนสูง'],['lc','คาร์โบไฮเดรตต่ำ'],['easy','ต้องการอาหารทำง่าย'],['dis','ไม่ชอบอาหารบางชนิด']];
+const HARD={nobeef:'B',milk:'M',egg:'E',nut:'N',sea:'S',glu:'G'};
+const PREF={soft:['o','เนื้อนุ่ม'],lowna:['l','โซเดียมต่ำ'],hp:['h','โปรตีนสูง'],lc:['c','คาร์บต่ำ'],easy:['z','ทำง่าย']};
+const TAGL={H:'พลังงานสูง',F:'ความอิ่มพอดีและโปรตีน',Q:'เมนูเตรียมเร็ว',L:'พลังงานเบา',S:'เนื้อนุ่มเคี้ยวง่าย',B:'ประหยัด'};
+const SH=[.28,.38,.34],KT=[400,600,500];
+
+// ===== STATE & UTILS =====
+const fresh=()=>({age:1,budget:120,mode:'mixed',sel:[new Set(),new Set(),new Set()],res:new Set(),other:'',plan:null,cands:[],eatenIds:new Set(),open:new Set()});
+let S=fresh();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>t.style.opacity=0,2600)}
+const cost=(f,m)=>m==='buy'?f.b:f.home;
+const tags=s=>{let t='';S.sel[s].forEach(id=>t+=ACTBY[id].t);if(S.age==3)t+='S';return t};
+
+// ===== INPUT HANDLERS =====
+function setAge(g){if(g==S.age)return;const had=S.sel.some(x=>x.size);S.age=g;S.sel=[new Set(),new Set(),new Set()];S.plan=null;S.open.clear();S.eatenIds.clear();$('out').innerHTML='';renderAll();if(had)toast('เปลี่ยนช่วงวัย — ล้างกิจกรรมเดิมแล้ว กรุณาเลือกกิจกรรมของวัยใหม่')}
+function setBudget(v){S.budget=Math.max(0,Math.round(+v||0));renderBudget();touch()}
+function setMode(m){S.mode=m;renderModes();touch()}
+function toggleRes(k){S.res.has(k)?S.res.delete(k):S.res.add(k);renderRes();if(k=='dis'&&S.res.has(k))$('other').focus();touch()}
+function toggleAct(p,id){const s=S.sel[p];s.has(id)?s.delete(id):s.add(id);renderActs(p);touch(false)}
+function rnd(){S.sel=ACTS[S.age].map(g=>new Set([...g].sort(()=>Math.random()-.5).slice(0,1+Math.floor(Math.random()*2)).map(a=>a.id)));[0,1,2].forEach(renderActs);touch(false);toast('🎲 สุ่มกิจกรรมที่เหมาะกับวัยแล้ว')}
+function clr(){S.sel=[new Set(),new Set(),new Set()];[0,1,2].forEach(renderActs);touch(false);toast('ล้างกิจกรรมทั้งหมดแล้ว')}
+function resetAll(){S=fresh();$('other').value='';[0,1,2].forEach(i=>$('q'+i).value='');$('out').innerHTML='';renderAll();toast('รีเซ็ตทุกอย่างแล้ว')}
+function touch(msg=true){renderBudget();if(S.plan){build(false);renderOut();if(msg)toast('อัปเดตแผนตามข้อมูลใหม่แล้ว')}}
+
+// ===== RECOMMENDATION ENGINE (rule-based, explainable) =====
+function pool(s){
+ const dis=S.other.split(/[,，;]/).map(x=>x.trim()).filter(Boolean);
+ let L=FOODS.filter(f=>f.ml.includes(s)&&!(S.res.has('nospicy')&&f.fl.includes('k'))&&!(S.res.has('veg')&&!f.fl.includes('v'))
+  &&!Object.keys(HARD).some(k=>S.res.has(k)&&f.fl.includes(HARD[k]))&&!dis.some(d=>(f.n+f.ing.map(i=>i.n).join()).includes(d)));
+ const miss=[];
+ for(const k in PREF){if(!S.res.has(k))continue;const t=L.filter(f=>f.fl.includes(PREF[k][0]));t.length>=2?L=t:miss.push(PREF[k][1])}
+ return{L,miss}}
+function scoreOf(f,s,mode,share){
+ const k=[...new Set(tags(s))],c=cost(f,mode);
+ const m={H:f.kc>=450?1:.4,F:f.pr>=15&&f.kc<=520?1:.45,Q:(f.pt<=15||mode==='buy')?1:.3,L:f.kc<=400?1:.4,S:f.fl.includes('o')?1:.3,B:c<=35?1:.4};
+ const a=k.length?k.reduce((x,t)=>x+m[t],0)/k.length:.6;
+ const tg=KT[s]*AGES[S.age].k,n=.7*Math.max(0,1-Math.abs(f.kc-tg)/tg)+.3*Math.min(f.pr/20,1);
+ const b=c<=share?1:Math.max(0,1-(c-share)/share);
+ let p=.5+.1*Object.keys(PREF).filter(x=>S.res.has(x)&&f.fl.includes(PREF[x][0])).length;
+ if(S.eatenIds.has(f.id))p-=.4;if(mode==='home'&&f.fl.includes('z'))p+=.1;if(S.age==0&&f.fl.includes('k'))p-=.3;
+ p=Math.max(0,Math.min(1,p));
+ return{a,n,b,p,t:100*(.3*a+.3*n+.25*b+.15*p)}}
+function pickModes(){
+ if(S.mode!=='mixed')return[0,1,2].map(()=>S.mode);
+ const m=[0,1,2].map(s=>tags(s).includes('Q')?'buy':'home');
+ if(new Set(m).size<2){m.includes('home')?m[1]='buy':m[2]='home'}return m}
+function build(jit){
+ const old=S.plan||[],modes=pickModes(),cands=[],plan=[],used=new Set();
+ [0,1,2].forEach(s=>{if(old[s]&&old[s].eaten)used.add(old[s].f.id)});
+ [0,1,2].forEach(s=>{
+  if(old[s]&&old[s].eaten){plan[s]=old[s];cands[s]=S.cands[s];return}
+  const{L,miss}=pool(s),share=S.budget*SH[s];
+  const c=L.map(f=>{const sc=scoreOf(f,s,modes[s],share);return{f,sc,r:sc.t+(jit?Math.random()*10:0)}}).sort((a,b)=>b.r-a.r);
+  cands[s]=c;const pk=c.find(x=>!used.has(x.f.id))||c[0];
+  if(pk)used.add(pk.f.id);
+  plan[s]=pk?{f:pk.f,mode:modes[s],sc:pk.sc,miss}:null});
+ S.cands=cands;S.plan=plan;repair()}
+const total=()=>S.plan.reduce((a,p)=>a+(p?cost(p.f,p.mode):0),0);
+function repair(){
+ for(let i=0;i<12&&total()>S.budget;i++){let best=null;
+  S.plan.forEach((p,s)=>{if(!p||p.eaten)return;const cur=cost(p.f,p.mode);
+   S.cands[s].forEach(x=>{const c=cost(x.f,p.mode);if(c>=cur||S.plan.some((q,j)=>j!=s&&q&&q.f.id==x.f.id))return;
+    const g=(cur-c)/(p.sc.t-x.sc.t+5);if(!best||g>best.g)best={s,x,g}})});
+  if(!best)break;S.plan[best.s]={...S.plan[best.s],f:best.x.f,sc:best.x.sc}}}
+function analyze(){
+ if(!(S.budget>0)){toast('กรุณากรอกงบประมาณมากกว่า 0 บาท');return}
+ if(!S.sel.some(x=>x.size))toast('ยังไม่ได้เลือกกิจกรรม — ระบบจะใช้ค่ามาตรฐานของช่วงวัย');
+ $('out').innerHTML='<div class="card text-center py-10"><div class="mx-auto h-10 w-10 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin"></div><p class="mt-3 text-emerald-800">DailyBite AI กำลังวิเคราะห์วันของคุณ…</p></div>';
+ setTimeout(()=>{S.plan=null;S.eatenIds.clear();S.open.clear();build(false);renderOut();$('out').scrollIntoView({behavior:'smooth'});toast('วิเคราะห์เสร็จแล้ว ✨')},900)}
+function changeMeal(s){
+ const p=S.plan[s],c=S.cands[s];if(!p||c.length<2){toast('ไม่มีเมนูทางเลือกอื่นที่ผ่านเงื่อนไข');return}
+ const i=c.findIndex(x=>x.f.id==p.f.id);
+ for(let k=1;k<=c.length;k++){const x=c[(i+k)%c.length];if(x.f.id!=p.f.id&&!S.plan.some((q,j)=>j!=s&&q&&q.f.id==x.f.id)){S.plan[s]={...p,f:x.f,sc:x.sc};break}}
+ renderOut();toast('เปลี่ยนเมนูแล้ว — คำนวณงบใหม่ทันที')}
+function eat(s){const p=S.plan[s];p.eaten=!p.eaten;p.eaten?S.eatenIds.add(p.f.id):S.eatenIds.delete(p.f.id);renderOut();toast(p.eaten?'บันทึกว่ากินแล้ว — แผนใหม่จะไม่แนะนำซ้ำ':'ยกเลิกการบันทึกแล้ว')}
+function regen(){build(true);renderOut();toast('สร้างแผนใหม่แล้ว (มื้อที่กินแล้วยังคงอยู่)')}
+function toggleOpen(s){S.open.has(s)?S.open.delete(s):S.open.add(s);renderOut()}
+
+// ===== RENDER =====
+function renderAges(){$('ages').innerHTML=AGES.map((a,i)=>`<button class="opt ${i==S.age?'on':''}" onclick="setAge(${i})"><div class="text-2xl">${a.e}</div><div class="font-semibold text-sm">${a.n}</div><div class="text-xs text-gray-500">${a.r}</div></button>`).join('')}
+function renderModes(){const M=[['buy','🛒 Buy All'],['home','🍳 Home Cooking'],['mixed','🔀 Mixed']];$('modes').innerHTML=M.map(m=>`<button class="opt text-center ${S.mode==m[0]?'on':''}" onclick="setMode('${m[0]}')">${m[1]}</button>`).join('')}
+function renderRes(){$('res').innerHTML=RES.map(r=>`<button class="opt ${S.res.has(r[0])?'on':''}" onclick="toggleRes('${r[0]}')">${r[1]}</button>`).join('')}
+function sums(){const c=S.plan?S.plan.map(p=>p?cost(p.f,p.mode):0):[0,0,0],T=c.reduce((a,b)=>a+b,0);return{c,T,R:S.budget-T,pct:S.budget?Math.round(T/S.budget*100):0}}
+function renderBudget(){$('bud').value=S.budget;$('bhint').textContent=S.budget<50?'⚠️ งบต่ำกว่า 50 บาท อาจไม่พอสำหรับ 3 มื้อ':S.budget>500?'งบสูงกว่าช่วงแนะนำ (50–500 บาท) — ใช้งานได้ตามปกติ':'แนะนำ 50–500 บาท (กรอกมากกว่า 500 ได้)';
+ if(!S.plan){$('bmini').textContent='ยังไม่ได้วิเคราะห์ — กด Analyze My Day';return}
+ const m=sums();$('bmini').textContent=`ใช้ไป ${m.T} ฿ · คงเหลือ ${m.R} ฿ · ${m.pct}% ของงบ`}
+function renderModesInit(){}
+function initActs(){$('acts').innerHTML=PER.map((p,i)=>`<div class="card"><h3 class="font-semibold">${p.e} ${p.t}</h3><input id="q${i}" oninput="renderActs(${i})" placeholder="🔍 ค้นหากิจกรรม" class="border rounded-xl px-3 py-1.5 w-full text-sm my-2"><div id="ch${i}" class="flex flex-wrap gap-1 mb-2"></div><div id="op${i}" class="flex flex-col gap-1 max-h-56 overflow-auto"></div></div>`).join('')}
+function renderActs(i){
+ const q=$('q'+i).value.trim(),L=ACTS[S.age][i].filter(a=>a.n.includes(q));
+ $('op'+i).innerHTML=L.length?L.map(a=>{const en=a.t.includes('H')?'พลังงานสูง':a.t.includes('L')?'เบา':'ปานกลาง',tm=a.t.includes('Q')?'เวลาจำกัด':'เวลาปกติ';
+  return`<button class="opt ${S.sel[i].has(a.id)?'on':''}" onclick="toggleAct(${i},'${a.id}')">${a.n}<div class="text-xs text-gray-500">⚡${en} · ⏱️${tm}</div></button>`}).join(''):'<div class="text-sm text-gray-400 text-center py-4">ไม่พบกิจกรรมที่ค้นหา</div>';
+ $('ch'+i).innerHTML=[...S.sel[i]].map(id=>`<span class="bg-emerald-100 text-emerald-800 rounded-full px-2 py-0.5 text-xs">${ACTBY[id].n} <button aria-label="ลบ" onclick="toggleAct(${i},'${id}')">✕</button></span>`).join('')||'<span class="text-xs text-gray-400">ยังไม่ได้เลือก (ไม่เลือกก็ได้)</span>'}
+function renderAll(){renderAges();renderModes();renderRes();renderBudget();[0,1,2].forEach(renderActs)}
+
+function recipe(p){const f=p.f;return`<div class="mt-3 rounded-xl bg-emerald-50 p-3 text-sm space-y-2"><b>🛒 Ingredients &amp; Estimated Cost</b>
+<ul>${f.ing.map(i=>`<li class="flex justify-between"><span>${i.n}</span><span>${i.c} ฿</span></li>`).join('')}</ul>
+<div class="flex justify-between font-semibold border-t border-emerald-200 pt-1"><span>ต้นทุนรวมต่อมื้อ</span><span>${f.home} ฿</span></div>
+<b>👩‍🍳 Quick Recipe</b><p class="text-gray-600">อุปกรณ์: ${f.eq} · เตรียม+ปรุงประมาณ ${f.pt} นาที</p>
+<ol class="list-decimal ml-5">${f.st.map(x=>`<li>${x}</li>`).join('')}</ol>
+${p.mode==='buy'?`<p class="text-xs text-amber-700">มื้อนี้ถูกจัดเป็นซื้อสำเร็จรูป (${f.b} ฿) — ถ้าทำเองต้นทุนประมาณ ${f.home} ฿</p>`:''}</div>`}
+
+function card(p,s){
+ if(!p)return`<div class="card bg-amber-50 border-amber-200"><b>${MEALE[s]} ${MEAL[s]}</b><p class="text-sm mt-2">ไม่พบเมนูที่ผ่านข้อจำกัดอาหารของคุณสำหรับมื้อนี้ กรุณาลดข้อจำกัดบางข้อ ระบบไม่แนะนำเมนูที่เสี่ยงต่อการแพ้</p></div>`;
+ const f=p.f,c=cost(f,p.mode),share=Math.round(S.budget*SH[s]),t=[...new Set(tags(s))],names=[...S.sel[s]].map(id=>ACTBY[id].n);
+ const why=[];
+ why.push(names.length?`กิจกรรมที่เลือก: ${names.slice(0,2).join(', ')}${names.length>2?' …':''} → ระบบให้น้ำหนักกับ ${t.map(x=>TAGL[x]).join(', ')||'สมดุลทั่วไป'}`:`ไม่ได้เลือกกิจกรรมช่วงนี้ ระบบใช้ค่ามาตรฐานของ${AGES[S.age].n}`);
+ t.forEach(x=>why.push({H:`พลังงาน ${f.kc} kcal รองรับกิจกรรมที่ใช้แรง`,F:`โปรตีน ${f.pr} ก. และไม่หนักท้องเกินไป เหมาะกับช่วงที่ต้องใช้สมาธิ`,Q:`เตรียมเพียง ${f.pt} นาที${p.mode==='buy'?' หรือซื้อได้ทันที':''} เหมาะกับเวลาจำกัด`,L:`พลังงานเบา (${f.kc} kcal) เหมาะกับกิจกรรมไม่หนัก`,S:f.fl.includes('o')?'เนื้อนุ่ม เคี้ยวและกลืนง่าย':'ควรปรุงให้นุ่มและหั่นชิ้นเล็ก',B:`ราคาประหยัด ${c} ฿`}[x]));
+ const bud=`ราคา ${c} ฿ ${c<=share?`อยู่ในสัดส่วนงบของมื้อนี้ (~${share} ฿)`:`สูงกว่าสัดส่วนงบมื้อนี้ (~${share} ฿)`} · ${p.mode==='home'?'ทำเองประหยัดกว่าซื้อ '+(f.b-f.home)+' ฿':'ซื้อสำเร็จรูป สะดวก'}`;
+ const w=[];if(S.age==0&&f.fl.includes('k'))w.push('เมนูมีพริก ควรลดความเผ็ดสำหรับเด็ก');if(S.age==3&&!f.fl.includes('o'))w.push('ผู้สูงอายุ: ควรปรุงให้นุ่มและหั่นชิ้นเล็ก');
+ if(Object.keys(HARD).some(k=>S.res.has(k)))w.push('ตรวจสอบส่วนผสมจริงและการปนเปื้อนข้ามก่อนรับประทาน');
+ p.miss.forEach(m=>w.push(`มีเมนูตรงเงื่อนไข "${m}" ไม่เพียงพอ ระบบจึงผ่อนเงื่อนไขนี้`));
+ const al=[...f.fl].filter(x=>ALG[x]).map(x=>ALG[x]);
+ return`<div class="card ${p.eaten?'bg-emerald-50':''}"><div class="flex justify-between text-sm text-emerald-700 font-semibold"><span>${MEALE[s]} ${MEAL[s]}</span><span>${p.mode==='buy'?'🛒 ซื้อสำเร็จรูป':'🍳 ทำเอง'}</span></div>
+<div class="text-5xl text-center my-2">${f.e}</div><h3 class="text-lg font-bold text-center">${f.n}${p.eaten?' ✅':''}</h3>
+<div class="grid grid-cols-2 gap-1 text-sm my-2"><span>💵 ${c} ฿</span><span>🔥 ~${f.kc} kcal</span><span>💪 ~${f.pr} g</span><span>⏱️ ${f.pt} นาที</span></div>
+<div class="text-sm font-semibold">⭐ คะแนนเหมาะสม ${Math.round(p.sc.t)}/100</div>
+<div class="text-xs text-gray-500">กิจกรรม ${Math.round(p.sc.a*100)} · โภชนาการ ${Math.round(p.sc.n*100)} · งบ ${Math.round(p.sc.b*100)} · ความชอบ ${Math.round(p.sc.p*100)}</div>
+<div class="mt-2 rounded-xl bg-teal-50 p-2 text-sm"><b>💡 DailyBite Reason</b><ul class="list-disc ml-4">${why.map(x=>`<li>${x}</li>`).join('')}<li>${bud}</li></ul></div>
+<p class="text-xs text-gray-500 mt-1">ส่วนผสมที่ทราบ: ${al.length?al.join(', ')+' (เมนูนี้ผ่านเงื่อนไขการแพ้ของคุณ)':'ไม่มีสารก่อภูมิแพ้หลักในข้อมูลที่มี (ไม่ใช่การรับรองความปลอดภัย)'}</p>
+${w.map(x=>`<p class="text-xs text-amber-700 mt-1">⚠️ ${esc(x)}</p>`).join('')}
+<div class="flex flex-wrap gap-2 mt-3"><button class="btn bs text-sm" ${p.eaten?'disabled':''} onclick="changeMeal(${s})">🔄 Change This Meal</button><button class="btn bs text-sm" onclick="eat(${s})">${p.eaten?'↩️ ยกเลิกกินแล้ว':'✅ Mark as Eaten'}</button><button class="btn bs text-sm" onclick="toggleOpen(${s})">${S.open.has(s)?'🔼 Collapse Recipe':'🔽 Expand Recipe'}</button></div>
+${S.open.has(s)?recipe(p):''}</div>`}
+
+function renderOut(){
+ if(!S.plan){$('out').innerHTML='<div class="card text-center text-gray-500">ยังไม่มีผลวิเคราะห์ — เลือกข้อมูลแล้วกด ✨ Analyze My Day</div>';return}
+ const m=sums(),buyAll=S.plan.reduce((a,p)=>a+(p?p.f.b:0),0),hm=S.plan.reduce((a,p)=>a+(p&&p.mode==='home'?cost(p.f,'home'):0),0),by=m.T-hm;
+ const rs=RES.filter(r=>S.res.has(r[0])).map(r=>r[1]).concat(S.other.trim()?['อื่น ๆ: '+esc(S.other.trim())]:[]);
+ const over=m.T>S.budget;
+ $('out').innerHTML=`<div class="space-y-4">
+<section class="card"><div class="flex flex-wrap items-center gap-2 justify-between"><h2 class="font-bold">🧠 AI Analysis Summary</h2><span class="bg-amber-100 text-amber-800 text-xs rounded-full px-3 py-1">Demo Mode — Rule-Based AI Simulation</span></div>
+<p class="text-sm mt-2">${AGES[S.age].e} ${AGES[S.age].n} (${AGES[S.age].r}) · งบ ${S.budget} ฿/วัน · ${{buy:'ซื้อทั้งหมด',home:'ทำเองทั้งหมด',mixed:'ผสมผสาน'}[S.mode]} · ข้อจำกัด: ${rs.length?rs.join(', '):'ไม่มี'}</p>
+<ul class="text-sm mt-2 space-y-1">${[0,1,2].map(s=>{const n=S.sel[s].size,t=[...new Set(tags(s))].map(x=>TAGL[x]).join(', ');return`<li>${MEALE[s]} ${MEAL[s]}: ${n?n+' กิจกรรม → ให้น้ำหนัก '+(t||'สมดุลทั่วไป'):'ไม่ได้เลือกกิจกรรม ใช้ค่ามาตรฐานของวัย'}</li>`}).join('')}</ul>
+<p class="text-xs text-gray-500 mt-2">คะแนนรวม = กิจกรรม 30% + โภชนาการ 30% + งบ 25% + ความชอบ/ความหลากหลาย 15% · ข้อจำกัดการแพ้และข้อห้ามถูกกรองก่อนให้คะแนนเสมอ ไม่ถูกแลกด้วยคะแนน</p></section>
+${over?`<div class="card bg-red-50 border-red-200 text-sm text-red-800">⚠️ งบ ${S.budget} ฿ ไม่เพียงพอสำหรับเงื่อนไขนี้จริง ๆ — ระบบเลือกชุดที่ถูกลงเท่าที่เป็นไปได้แล้ว ยังเกินงบ ${m.T-S.budget} ฿ ลองเพิ่มงบ ทำอาหารเอง หรือลดข้อจำกัดบางข้อ</div>`:''}
+<div class="grid md:grid-cols-3 gap-3">${S.plan.map((p,s)=>card(p,s)).join('')}</div>
+<section class="card"><h2 class="font-bold mb-2">💰 Daily Budget Summary</h2>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+<div class="bg-emerald-50 rounded-xl p-2">Daily Budget<br><b>${S.budget} ฿</b></div><div class="bg-emerald-50 rounded-xl p-2">Breakfast Cost<br><b>${m.c[0]} ฿</b></div><div class="bg-emerald-50 rounded-xl p-2">Lunch Cost<br><b>${m.c[1]} ฿</b></div><div class="bg-emerald-50 rounded-xl p-2">Dinner Cost<br><b>${m.c[2]} ฿</b></div>
+<div class="bg-teal-50 rounded-xl p-2">Total Cost<br><b>${m.T} ฿</b></div><div class="${over?'bg-red-50':'bg-teal-50'} rounded-xl p-2">Remaining Budget<br><b>${m.R} ฿${over?' (เกินงบ)':''}</b></div><div class="bg-teal-50 rounded-xl p-2 col-span-2">Budget Usage<br><b>${m.pct}%</b></div></div>
+<div class="h-3 bg-gray-100 rounded-full mt-3 overflow-hidden"><div class="h-full ${over?'bg-red-500':'bg-emerald-500'}" style="width:${Math.min(100,m.pct)}%"></div></div>
+<p class="text-sm mt-2">ตัวอย่างสรุป: งบ ${S.budget} ฿ ใช้ ${m.T} ฿ ${over?'เกิน':'คงเหลือ'} ${Math.abs(m.R)} ฿ · ทำเอง ${hm} ฿ / ซื้อ ${by} ฿ ${buyAll>m.T?`· ประหยัดกว่าซื้อทั้งหมด (${buyAll} ฿) อยู่ ${buyAll-m.T} ฿`:''}</p></section>
+<div class="flex flex-wrap gap-2 justify-center"><button class="btn bp" onclick="regen()">🔁 Regenerate Meal Plan</button><button class="btn bs" onclick="resetAll()">↺ Reset All</button></div></div>`;
+ renderBudget()}
+
+// ===== INIT =====
+initActs();renderAll();
+</script></body></html>
